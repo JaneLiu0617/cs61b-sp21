@@ -1,12 +1,10 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
-import static gitlet.Utils.error;
-import static gitlet.Utils.join;
+import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
@@ -15,101 +13,106 @@ import static gitlet.Utils.join;
  *
  * @author st3v3
  */
-class Repository implements Serializable {
+class Repository {
 
     // The current working directory.
     public static final File CWD = new File(System.getProperty("user.dir"));
     // The .gitlet directory.
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    public static final File STAGE_DIR = join(GITLET_DIR, "staged");
-    public static final File STAGE_ADD_DIR = join(STAGE_DIR, "add");
-    public static final File STAGE_RM_DIR = join(STAGE_DIR, "remove");
-    public static final File REPO_FILE = join(GITLET_DIR, "repo");
-
-    private String head;
-    private final Map<String, String> branchMapping;
-    private final Map<String, String> stageMapping;
+    public static final File HEAD_FILE = join(GITLET_DIR, "HEAD");
+    public static final File INDEX_FILE = join(GITLET_DIR, "index");
+    public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
+    public static final File REFS_DIR = join(GITLET_DIR, "refs");
+    public static final File HEADS_DIR = join(REFS_DIR, "heads");
 
     public static boolean isInitialized() {
         return GITLET_DIR.exists();
     }
 
-    public Repository() {
-        head = null;
-        branchMapping = new HashMap<>();
-        stageMapping = new HashMap<>();
-    }
-
-    public void initialize() {
+    public static void initialize() throws IOException {
         if (isInitialized()) {
             throw error("A Gitlet version-control system already exists in the current directory.");
         }
-        GITLET_DIR.mkdirs();
-        STAGE_DIR.mkdirs();
-        STAGE_ADD_DIR.mkdirs();
-        STAGE_RM_DIR.mkdirs();
-        head = Commit.creatInitialCommit();
-        branchMapping.put("master", head);
+        GITLET_DIR.mkdir();
+        HEAD_FILE.createNewFile();
+        INDEX_FILE.createNewFile();
+        OBJECTS_DIR.mkdir();
+        REFS_DIR.mkdir();
+        HEADS_DIR.mkdir();
+        File master = join(HEADS_DIR, "master");
+        master.createNewFile();
+        writeContents(HEAD_FILE, "refs/heads/master");
+        writeContents(master, creatObjectFile(Commit.INIT_COMMIT));
     }
 
-    public void addFile(File file) {
-
-    }
-
-    public void commit(String message) {
-
-    }
-
-    public void removeFile(File file) {
+    public static void addFile(File file) {
 
     }
 
-    public String getLog() {
+    public static void commit(String message) {
+
+    }
+
+    public static void removeFile(File file) {
+
+    }
+
+    public static String getLog() {
 
         throw new RuntimeException("Not implemented!");
     }
 
-    public String getGlobalLog() {
+    public static String getGlobalLog() {
 
         throw new RuntimeException("Not implemented!");
     }
 
-    public String[] getCommitIDByMsg(String message) {
+    public static String[] getCommitIDByMsg(String message) {
 
         throw new RuntimeException("Not implemented!");
     }
 
-    public String getStatus() {
+    public static String getStatus() {
 
         throw new RuntimeException("Not implemented!");
     }
 
-    public void createBranch(String name) {
+    public static void createBranch(String name) {
 
     }
 
-    public void removeBranch(String name) {
+    public static void removeBranch(String name) {
 
     }
 
-    public void reset(String id) {
+    public static void reset(String id) {
 
     }
 
-    public void mergeBranch(String name) {
+    public static void mergeBranch(String name) {
 
     }
 
-    public void checkoutToBranch(String name) {
+    public static void checkoutToBranch(String name) {
 
     }
 
-    public void checkoutFile(File file) {
+    public static void checkoutFile(File file) {
 
     }
 
-    public void checkoutFileToCommit(File file, String id) {
+    public static void checkoutFileToCommit(File file, String id) {
 
+    }
+
+    private static String creatObjectFile(Serializable obj) throws IOException {
+        String sha1 = sha1(serialize(obj));
+        File dir = join(OBJECTS_DIR, sha1.substring(0, 2));
+        File file = join(dir, sha1.substring(2));
+        dir.mkdir();
+        file.createNewFile();
+        writeObject(file, obj);
+        return sha1;
     }
 
     /* TODO: fill in the rest of this class. */

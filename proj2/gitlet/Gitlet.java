@@ -1,24 +1,20 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
 
-import static gitlet.Utils.*;
+import static gitlet.Utils.error;
+import static gitlet.Utils.join;
 
 class Gitlet {
 
-    private final Repository repo;
     private final String[] args;
 
     public Gitlet(String[] args) {
         this.args = args;
-        if (Repository.isInitialized()) {
-            repo = readObject(Repository.REPO_FILE, Repository.class);
-        } else {
-            repo = new Repository();
-        }
     }
 
-    public void run() {
+    public void run() throws IOException {
         if (args.length == 0) {
             throw error("Please enter a command.");
         }
@@ -39,52 +35,51 @@ class Gitlet {
             case "merge" -> merge();
             default -> throw error("No command with that name exists.");
         }
-        writeObject(Repository.REPO_FILE, repo);
     }
 
-    private void init() {
+    private void init() throws IOException {
         validateNumArgs(1);
-        repo.initialize();
+        Repository.initialize();
     }
 
     private void add() {
         validateNumArgs(2);
         validateRepoInitialized();
         File file = join(Repository.CWD, args[1]);
-        repo.addFile(file);
+        Repository.addFile(file);
     }
 
     private void commit() {
         validateNumArgs(2);
         validateRepoInitialized();
         String message = args[1];
-        repo.commit(message);
+        Repository.commit(message);
     }
 
     private void rm() {
         validateNumArgs(2);
         validateRepoInitialized();
         File file = join(Repository.CWD, args[1]);
-        repo.removeFile(file);
+        Repository.removeFile(file);
     }
 
     private void log() {
         validateNumArgs(1);
         validateRepoInitialized();
-        System.out.println(repo.getLog());
+        System.out.println(Repository.getLog());
     }
 
     private void globalLog() {
         validateNumArgs(1);
         validateRepoInitialized();
-        System.out.println(repo.getGlobalLog());
+        System.out.println(Repository.getGlobalLog());
     }
 
     private void find() {
         validateNumArgs(2);
         validateRepoInitialized();
         String message = args[1];
-        String[] ids = repo.getCommitIDByMsg(message);
+        String[] ids = Repository.getCommitIDByMsg(message);
         for (String id : ids) {
             System.out.println(id);
         }
@@ -93,7 +88,7 @@ class Gitlet {
     private void status() {
         validateNumArgs(1);
         validateRepoInitialized();
-        System.out.println(repo.getStatus());
+        System.out.println(Repository.getStatus());
     }
 
     private void checkout() {
@@ -104,14 +99,14 @@ class Gitlet {
         switch (args.length) {
             case 2 -> {
                 branchName = args[1];
-                repo.checkoutToBranch(branchName);
+                Repository.checkoutToBranch(branchName);
             }
             case 3 -> {
                 if (!args[1].equals("--")) {
                     throw error("Incorrect operands.");
                 }
                 file = join(Repository.CWD, args[2]);
-                repo.checkoutFile(file);
+                Repository.checkoutFile(file);
             }
             case 4 -> {
                 if (!args[2].equals("--")) {
@@ -119,7 +114,7 @@ class Gitlet {
                 }
                 commitID = args[1];
                 file = join(Repository.CWD, args[3]);
-                repo.checkoutFileToCommit(file, commitID);
+                Repository.checkoutFileToCommit(file, commitID);
             }
             default -> throw error("Incorrect operands.");
         }
@@ -129,28 +124,28 @@ class Gitlet {
         validateNumArgs(2);
         validateRepoInitialized();
         String name = args[1];
-        repo.createBranch(name);
+        Repository.createBranch(name);
     }
 
     private void rmBranch() {
         validateNumArgs(2);
         validateRepoInitialized();
         String branchName = args[1];
-        repo.removeBranch(branchName);
+        Repository.removeBranch(branchName);
     }
 
     private void reset() {
         validateNumArgs(2);
         validateRepoInitialized();
         String commitID = args[1];
-        repo.reset(commitID);
+        Repository.reset(commitID);
     }
 
     private void merge() {
         validateNumArgs(2);
         validateRepoInitialized();
         String branchName = args[1];
-        repo.mergeBranch(branchName);
+        Repository.mergeBranch(branchName);
     }
 
     private void validateNumArgs(int n) {
