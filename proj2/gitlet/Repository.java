@@ -26,7 +26,7 @@ class Repository {
     public static final File HEADS_DIR = join(REFS_DIR, "heads");
 
     public static boolean isInitialized() {
-        return GITLET_DIR.exists();
+        return GITLET_DIR.isDirectory();
     }
 
     public static void initialize() throws IOException {
@@ -42,11 +42,17 @@ class Repository {
         File master = join(HEADS_DIR, "master");
         master.createNewFile();
         writeContents(HEAD_FILE, "refs/heads/master");
-        writeContents(master, creatObjectFile(Commit.INIT_COMMIT));
+        writeContents(master, createObjectFile(Commit.INIT_COMMIT));
     }
 
     public static void addFile(File file) {
-
+        if (!file.isFile()) {
+            throw error("File does not exist.");
+        }
+        String pathToHead = readContentsAsString(HEAD_FILE);
+        File headFile = join(GITLET_DIR, pathToHead);
+        String headCommitID = readContentsAsString(headFile);
+        Commit headCommit = readObjectFile(headCommitID, Commit.class);
     }
 
     public static void commit(String message) {
@@ -105,7 +111,7 @@ class Repository {
 
     }
 
-    private static String creatObjectFile(Serializable obj) throws IOException {
+    private static String createObjectFile(Serializable obj) throws IOException {
         String sha1 = sha1(serialize(obj));
         File dir = join(OBJECTS_DIR, sha1.substring(0, 2));
         File file = join(dir, sha1.substring(2));
@@ -113,6 +119,12 @@ class Repository {
         file.createNewFile();
         writeObject(file, obj);
         return sha1;
+    }
+
+    private static <T extends Serializable> T readObjectFile(String sha1, Class<T> expectedClass) {
+        File dir = join(OBJECTS_DIR, sha1.substring(0, 2));
+        File file = join(dir, sha1.substring(2));
+        return readObject(file, expectedClass);
     }
 
     /* TODO: fill in the rest of this class. */
