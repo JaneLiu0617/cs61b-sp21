@@ -1,14 +1,12 @@
 package gitlet;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
 
 import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
- * TODO: It's a good idea to give a description here of what else this Class
+ * It's a good idea to give a description here of what else this Class
  * does at a high level.
  *
  * @author st3v3
@@ -16,116 +14,118 @@ import static gitlet.Utils.*;
 class Repository {
 
     // The current working directory.
-    public static final File CWD = new File(System.getProperty("user.dir"));
+    static final File CWD = new File(System.getProperty("user.dir"));
     // The .gitlet directory.
-    public static final File GITLET_DIR = join(CWD, ".gitlet");
-    public static final File HEAD_FILE = join(GITLET_DIR, "HEAD");
-    public static final File INDEX_FILE = join(GITLET_DIR, "index");
-    public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
-    public static final File REFS_DIR = join(GITLET_DIR, "refs");
-    public static final File HEADS_DIR = join(REFS_DIR, "heads");
+    static final File GITLET_DIR = join(CWD, ".gitlet");
+    static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
+    static final File REFS_DIR = join(GITLET_DIR, "refs");
+    static final File HEADS_DIR = join(REFS_DIR, "heads");
+    static final File HEAD_FILE = join(GITLET_DIR, "HEAD");
+    static final File INDEX_FILE = join(GITLET_DIR, "index");
+    static final File MASTER_FILE = join(HEADS_DIR, "master");
 
-    public static boolean isInitialized() {
+    static boolean isInitialized() {
         return GITLET_DIR.isDirectory();
     }
 
-    public static void initialize() throws IOException {
+    static void initialize() {
         if (isInitialized()) {
             throw error("A Gitlet version-control system already exists in the current directory.");
         }
         GITLET_DIR.mkdir();
-        HEAD_FILE.createNewFile();
-        INDEX_FILE.createNewFile();
         OBJECTS_DIR.mkdir();
         REFS_DIR.mkdir();
         HEADS_DIR.mkdir();
-        File master = join(HEADS_DIR, "master");
-        master.createNewFile();
         writeContents(HEAD_FILE, "refs/heads/master");
-        writeContents(master, createObjectFile(Commit.INIT_COMMIT));
+        writeContents(MASTER_FILE, Commit.createInitCommitFile());
+        new StageReference().writeToIndex();
     }
 
-    public static void addFile(File file) {
+    static void addFile(String fileName) {
+        File file = join(CWD, fileName);
         if (!file.isFile()) {
             throw error("File does not exist.");
         }
+        Commit headCommit = getHeadCommit();
+        String content = readContentsAsString(file);
+        Blob blob = new Blob(fileName, content);
+        StageReference stageRef = getStageRef();
+        if (headCommit.contains(blob)) {
+            stageRef.remove(fileName);
+        } else {
+            stageRef.add(blob);
+        }
+        stageRef.writeToIndex();
+    }
+
+    static void commit(String message) {
+
+    }
+
+    static void removeFile(String fileName) {
+
+    }
+
+    static String getLog() {
+
+        throw new RuntimeException("Not implemented!");
+    }
+
+    static String getGlobalLog() {
+
+        throw new RuntimeException("Not implemented!");
+    }
+
+    static String[] getCommitIDByMsg(String message) {
+
+        throw new RuntimeException("Not implemented!");
+    }
+
+    static String getStatus() {
+
+        throw new RuntimeException("Not implemented!");
+    }
+
+    static void createBranch(String name) {
+
+    }
+
+    static void removeBranch(String name) {
+
+    }
+
+    static void reset(String id) {
+
+    }
+
+    static void mergeBranch(String name) {
+
+    }
+
+    static void checkoutToBranch(String name) {
+
+    }
+
+    static void checkoutFile(String fileName) {
+
+    }
+
+    static void checkoutFileToCommit(String fileName, String id) {
+
+    }
+
+    private static String getHeadCommitID() {
         String pathToHead = readContentsAsString(HEAD_FILE);
         File headFile = join(GITLET_DIR, pathToHead);
-        String headCommitID = readContentsAsString(headFile);
-        Commit headCommit = readObjectFile(headCommitID, Commit.class);
+        return readContentsAsString(headFile);
     }
 
-    public static void commit(String message) {
-
+    private static Commit getHeadCommit() {
+        String headCommitID = getHeadCommitID();
+        return (Commit) GitObject.readObjectFile(headCommitID);
     }
 
-    public static void removeFile(File file) {
-
+    private static StageReference getStageRef() {
+        return readObject(INDEX_FILE, StageReference.class);
     }
-
-    public static String getLog() {
-
-        throw new RuntimeException("Not implemented!");
-    }
-
-    public static String getGlobalLog() {
-
-        throw new RuntimeException("Not implemented!");
-    }
-
-    public static String[] getCommitIDByMsg(String message) {
-
-        throw new RuntimeException("Not implemented!");
-    }
-
-    public static String getStatus() {
-
-        throw new RuntimeException("Not implemented!");
-    }
-
-    public static void createBranch(String name) {
-
-    }
-
-    public static void removeBranch(String name) {
-
-    }
-
-    public static void reset(String id) {
-
-    }
-
-    public static void mergeBranch(String name) {
-
-    }
-
-    public static void checkoutToBranch(String name) {
-
-    }
-
-    public static void checkoutFile(File file) {
-
-    }
-
-    public static void checkoutFileToCommit(File file, String id) {
-
-    }
-
-    private static String createObjectFile(Serializable obj) throws IOException {
-        String sha1 = sha1(serialize(obj));
-        File dir = join(OBJECTS_DIR, sha1.substring(0, 2));
-        File file = join(dir, sha1.substring(2));
-        dir.mkdir();
-        file.createNewFile();
-        writeObject(file, obj);
-        return sha1;
-    }
-
-    private static <T extends Serializable> T readObjectFile(String sha1, Class<T> expectedClass) {
-        File dir = join(OBJECTS_DIR, sha1.substring(0, 2));
-        File file = join(dir, sha1.substring(2));
-        return readObject(file, expectedClass);
-    }
-
-    /* TODO: fill in the rest of this class. */
 }

@@ -1,13 +1,16 @@
 package gitlet;
 
-import java.io.Serializable;
+class Blob extends GitObject {
 
-public class Blob implements Serializable {
-    private final String name;
+    private final String fileName;
     private final String content;
 
-    public Blob() {
-        this.name = null;
-        this.content = null;
+    Blob(String fileName, String content) {
+        this.fileName = fileName;
+        this.content = content;
+    }
+
+    String getFileName() {
+        return fileName;
     }
 }

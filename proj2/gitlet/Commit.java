@@ -1,54 +1,53 @@
 package gitlet;
 
-import java.io.Serializable;
 import java.time.Instant;
-import java.util.Objects;
 
 /**
  * Represents a gitlet commit object.
- * TODO: It's a good idea to give a description here of what else this Class
+ * It's a good idea to give a description here of what else this Class
  * does at a high level.
  *
  * @author st3v3
  */
-class Commit implements Serializable {
+class Commit extends GitObject {
+
     private final String message;
     private final Instant timestamp;
-    private final String treeID;
+    private final String referenceID;
     private final String parentID;
     private final String secondParentID;
 
-    public static final Commit INIT_COMMIT = new Commit("initial commit", null, null);
+    Commit() {
+        this.message = "initial commit";
+        this.timestamp = Instant.EPOCH;
+        this.referenceID = new Reference().createObjectFile();
+        this.parentID = null;
+        this.secondParentID = null;
+    }
 
-    public Commit(String message, String treeID, String parentID, String secondParentID) {
+    Commit(String message, String referenceID,
+           String parentID, String secondParentID) {
         this.message = message;
-        this.timestamp = parentID == null ? Instant.EPOCH : Instant.now();
-        this.treeID = null;
+        this.timestamp = Instant.now();
+        this.referenceID = referenceID;
         this.parentID = parentID;
         this.secondParentID = secondParentID;
     }
 
-    public Commit(String message, String treeID, String parentID) {
-        this(message, treeID, parentID, null);
+    Commit(String message, String referenceID, String parentID) {
+        this(message, referenceID, parentID, null);
     }
 
-    public String getMessage() {
-        return message;
+    static String createInitCommitFile() {
+        return new Commit().createObjectFile();
     }
 
-    public Instant getTimestamp() {
-        return timestamp;
+    boolean contains(Blob blob) {
+        Reference reference = getReference();
+        return reference.contains(blob);
     }
 
-    public String getTreeID() {
-        return treeID;
-    }
-
-    public String getParentID() {
-        return parentID;
-    }
-
-    public String getSecondParentID() {
-        return secondParentID;
+    Reference getReference() {
+        return (Reference) readObjectFile(referenceID);
     }
 }

@@ -1,20 +1,16 @@
 package gitlet;
 
-import java.io.File;
-import java.io.IOException;
-
 import static gitlet.Utils.error;
-import static gitlet.Utils.join;
 
 class Gitlet {
 
     private final String[] args;
 
-    public Gitlet(String[] args) {
+    Gitlet(String[] args) {
         this.args = args;
     }
 
-    public void run() throws IOException {
+    void run() {
         if (args.length == 0) {
             throw error("Please enter a command.");
         }
@@ -37,7 +33,7 @@ class Gitlet {
         }
     }
 
-    private void init() throws IOException {
+    private void init() {
         validateNumArgs(1);
         Repository.initialize();
     }
@@ -45,8 +41,8 @@ class Gitlet {
     private void add() {
         validateNumArgs(2);
         validateRepoInitialized();
-        File file = join(Repository.CWD, args[1]);
-        Repository.addFile(file);
+        String fileName = args[1];
+        Repository.addFile(fileName);
     }
 
     private void commit() {
@@ -59,8 +55,8 @@ class Gitlet {
     private void rm() {
         validateNumArgs(2);
         validateRepoInitialized();
-        File file = join(Repository.CWD, args[1]);
-        Repository.removeFile(file);
+        String fileName = args[1];
+        Repository.removeFile(fileName);
     }
 
     private void log() {
@@ -93,28 +89,25 @@ class Gitlet {
 
     private void checkout() {
         validateRepoInitialized();
-        File file;
-        String commitID;
-        String branchName;
         switch (args.length) {
             case 2 -> {
-                branchName = args[1];
+                String branchName = args[1];
                 Repository.checkoutToBranch(branchName);
             }
             case 3 -> {
                 if (!args[1].equals("--")) {
                     throw error("Incorrect operands.");
                 }
-                file = join(Repository.CWD, args[2]);
-                Repository.checkoutFile(file);
+                String fileName = args[2];
+                Repository.checkoutFile(fileName);
             }
             case 4 -> {
                 if (!args[2].equals("--")) {
                     throw error("Incorrect operands.");
                 }
-                commitID = args[1];
-                file = join(Repository.CWD, args[3]);
-                Repository.checkoutFileToCommit(file, commitID);
+                String commitID = args[1];
+                String fileName = args[3];
+                Repository.checkoutFileToCommit(fileName, commitID);
             }
             default -> throw error("Incorrect operands.");
         }
