@@ -1,6 +1,9 @@
 package gitlet;
 
+import java.io.File;
 import java.time.Instant;
+
+import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet commit object.
@@ -9,7 +12,7 @@ import java.time.Instant;
  *
  * @author st3v3
  */
-class Commit extends GitObject {
+class Commit implements GitObject {
 
     private final String message;
     private final Instant timestamp;
@@ -20,7 +23,7 @@ class Commit extends GitObject {
     Commit() {
         this.message = "initial commit";
         this.timestamp = Instant.EPOCH;
-        this.referenceID = new Reference().createObjectFile();
+        this.referenceID = new Reference().createFile();
         this.parentID = null;
         this.secondParentID = null;
     }
@@ -38,16 +41,44 @@ class Commit extends GitObject {
         this(message, referenceID, parentID, null);
     }
 
-    static String createInitCommitFile() {
-        return new Commit().createObjectFile();
+    static void createInitCommit() {
+        writeContents(Repository.HEAD_FILE, "refs/heads/master");
+        writeContents(Repository.MASTER_FILE, new Commit().createFile());
     }
 
-    boolean contains(Blob blob) {
+    static void commit(String message) {
+        Commit head = getHead();
+        String id = head.merge(message, StageReference.read());
+        writeToHead(id);
+        StageReference.clearIndexFile();
+    }
+
+    static String getHeadID() {
+        String pathToHead = readContentsAsString(Repository.HEAD_FILE);
+        File headFile = join(Repository.GITLET_DIR, pathToHead);
+        return readContentsAsString(headFile);
+    }
+
+    static Commit getHead() {
+        String headCommitID = getHeadID();
+        return (Commit) GitObject.read(headCommitID);
+    }
+
+    private static void writeToHead(String id) {
+
+    }
+
+    boolean contains(String fileName, Blob blob) {
         Reference reference = getReference();
-        return reference.contains(blob);
+        return reference.contains(fileName, blob);
     }
 
     Reference getReference() {
-        return (Reference) readObjectFile(referenceID);
+        return (Reference) GitObject.read(referenceID);
+    }
+
+    String merge(String message, StageReference stageRef) {
+        String id = getReference().merge(stageRef);
+        return new Commit(message, id, getID()).createFile();
     }
 }

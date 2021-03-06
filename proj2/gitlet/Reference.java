@@ -3,9 +3,7 @@ package gitlet;
 import java.util.HashMap;
 import java.util.Map;
 
-import static gitlet.Utils.writeObject;
-
-class Reference extends GitObject {
+class Reference implements GitObject {
 
     protected final Map<String, String> map;
 
@@ -13,19 +11,21 @@ class Reference extends GitObject {
         this.map = new HashMap<>();
     }
 
-    boolean contains(Blob blob) {
-        String fileName = blob.getFileName();
+    boolean contains(String fileName, Blob blob) {
         return blob.getID().equals(map.get(fileName));
     }
 
     void remove(String fileName) {
     }
 
-    void add(Blob blob) {
-        if (contains(blob)) {
+    void add(String fileName, Blob blob) {
+        if (contains(fileName, blob)) {
             return;
         }
-        String fileName = blob.getFileName();
-        map.put(fileName, blob.createObjectFile());
+        map.put(fileName, blob.createFile());
+    }
+
+    String merge(StageReference stageRef) {
+        throw new RuntimeException("Not implemented!");
     }
 }

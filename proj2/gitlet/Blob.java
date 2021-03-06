@@ -1,16 +1,27 @@
 package gitlet;
 
-class Blob extends GitObject {
+class Blob implements GitObject {
 
-    private final String fileName;
     private final String content;
 
-    Blob(String fileName, String content) {
-        this.fileName = fileName;
+    Blob(String content) {
         this.content = content;
     }
 
-    String getFileName() {
-        return fileName;
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof Blob)) {
+            return false;
+        }
+        Blob o = (Blob) obj;
+        return o.getID().equals(this.getID());
+    }
+
+    @Override
+    public int hashCode() {
+        return getID().hashCode();
     }
 }

@@ -36,9 +36,8 @@ class Repository {
         OBJECTS_DIR.mkdir();
         REFS_DIR.mkdir();
         HEADS_DIR.mkdir();
-        writeContents(HEAD_FILE, "refs/heads/master");
-        writeContents(MASTER_FILE, Commit.createInitCommitFile());
-        new StageReference().writeToIndex();
+        Commit.createInitCommit();
+        StageReference.clearIndexFile();
     }
 
     static void addFile(String fileName) {
@@ -46,20 +45,19 @@ class Repository {
         if (!file.isFile()) {
             throw error("File does not exist.");
         }
-        Commit headCommit = getHeadCommit();
-        String content = readContentsAsString(file);
-        Blob blob = new Blob(fileName, content);
-        StageReference stageRef = getStageRef();
-        if (headCommit.contains(blob)) {
-            stageRef.remove(fileName);
-        } else {
-            stageRef.add(blob);
-        }
-        stageRef.writeToIndex();
+        StageReference stageRef = StageReference.read();
+        stageRef.stage(file);
     }
 
     static void commit(String message) {
-
+        StageReference stageRef = StageReference.read();
+        if (stageRef.isEmpty()) {
+            throw error("No changes added to the commit.");
+        }
+        if (message.isBlank()) {
+            throw error("Please enter a commit message.");
+        }
+        Commit.commit(message);
     }
 
     static void removeFile(String fileName) {
@@ -112,20 +110,5 @@ class Repository {
 
     static void checkoutFileToCommit(String fileName, String id) {
 
-    }
-
-    private static String getHeadCommitID() {
-        String pathToHead = readContentsAsString(HEAD_FILE);
-        File headFile = join(GITLET_DIR, pathToHead);
-        return readContentsAsString(headFile);
-    }
-
-    private static Commit getHeadCommit() {
-        String headCommitID = getHeadCommitID();
-        return (Commit) GitObject.readObjectFile(headCommitID);
-    }
-
-    private static StageReference getStageRef() {
-        return readObject(INDEX_FILE, StageReference.class);
     }
 }
