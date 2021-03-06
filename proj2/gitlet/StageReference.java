@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static gitlet.Utils.*;
@@ -9,6 +10,7 @@ import static gitlet.Utils.*;
 public class StageReference extends Reference {
 
     private final Set<String> removeSet;
+
 
     StageReference() {
         super();
@@ -19,22 +21,8 @@ public class StageReference extends Reference {
         return readObject(Repository.INDEX_FILE, StageReference.class);
     }
 
-
     static void clearIndexFile() {
         new StageReference().writeToIndex();
-    }
-
-    void writeToIndex() {
-        writeObject(Repository.INDEX_FILE, this);
-    }
-
-    @Override
-    void remove(String fileName) {
-        super.remove(fileName);
-    }
-
-    boolean isEmpty() {
-        return removeSet.isEmpty() && map.isEmpty();
     }
 
     void stage(File file) {
@@ -48,5 +36,43 @@ public class StageReference extends Reference {
             add(fileName, blob);
         }
         writeToIndex();
+    }
+
+    void merge(Map<String, String> refMap) {
+        refMap.putAll(map);
+        refMap.keySet().removeAll(removeSet);
+    }
+
+    void unstage(String fileName) {
+        remove(fileName);
+        Commit headCommit = Commit.getHead();
+        if (headCommit.contains(fileName)) {
+            removeSet.add(fileName);
+            File file = join(Repository.CWD, fileName);
+            restrictedDelete(file);
+        }
+    }
+
+    boolean isEmpty() {
+        return removeSet.isEmpty() && map.isEmpty();
+    }
+
+    private void add(String fileName, Blob blob) {
+        if (contains(fileName, blob)) {
+            return;
+        }
+        map.put(fileName, blob.createFile());
+    }
+
+    private void remove(String fileName) {
+        String id = map.remove(fileName);
+        if (id == null) {
+            return;
+        }
+        GitObject.delete(id);
+    }
+
+    private void writeToIndex() {
+        writeObject(Repository.INDEX_FILE, this);
     }
 }

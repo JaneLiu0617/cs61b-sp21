@@ -20,12 +20,17 @@ class Commit implements GitObject {
     private final String parentID;
     private final String secondParentID;
 
+
     Commit() {
         this.message = "initial commit";
         this.timestamp = Instant.EPOCH;
         this.referenceID = new Reference().createFile();
         this.parentID = null;
         this.secondParentID = null;
+    }
+
+    Commit(String message, String referenceID, String parentID) {
+        this(message, referenceID, parentID, null);
     }
 
     Commit(String message, String referenceID,
@@ -35,10 +40,6 @@ class Commit implements GitObject {
         this.referenceID = referenceID;
         this.parentID = parentID;
         this.secondParentID = secondParentID;
-    }
-
-    Commit(String message, String referenceID, String parentID) {
-        this(message, referenceID, parentID, null);
     }
 
     static void createInitCommit() {
@@ -65,12 +66,17 @@ class Commit implements GitObject {
     }
 
     private static void writeToHead(String id) {
-
+        String pathToHead = readContentsAsString(Repository.HEAD_FILE);
+        File headFile = join(Repository.GITLET_DIR, pathToHead);
+        writeContents(headFile, id);
     }
 
     boolean contains(String fileName, Blob blob) {
-        Reference reference = getReference();
-        return reference.contains(fileName, blob);
+        return getReference().contains(fileName, blob);
+    }
+
+    boolean contains(String fileName) {
+        return getReference().contains(fileName);
     }
 
     Reference getReference() {

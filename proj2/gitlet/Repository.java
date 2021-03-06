@@ -2,7 +2,8 @@ package gitlet;
 
 import java.io.File;
 
-import static gitlet.Utils.*;
+import static gitlet.Utils.error;
+import static gitlet.Utils.join;
 
 /**
  * Represents a gitlet repository.
@@ -24,9 +25,6 @@ class Repository {
     static final File INDEX_FILE = join(GITLET_DIR, "index");
     static final File MASTER_FILE = join(HEADS_DIR, "master");
 
-    static boolean isInitialized() {
-        return GITLET_DIR.isDirectory();
-    }
 
     static void initialize() {
         if (isInitialized()) {
@@ -61,7 +59,12 @@ class Repository {
     }
 
     static void removeFile(String fileName) {
-
+        StageReference stageRef = StageReference.read();
+        Commit headCommit = Commit.getHead();
+        if (!stageRef.contains(fileName) && !headCommit.contains(fileName)) {
+            throw error("No reason to remove the file.");
+        }
+        stageRef.unstage(fileName);
     }
 
     static String getLog() {
@@ -110,5 +113,9 @@ class Repository {
 
     static void checkoutFileToCommit(String fileName, String id) {
 
+    }
+
+    static boolean isInitialized() {
+        return GITLET_DIR.isDirectory();
     }
 }

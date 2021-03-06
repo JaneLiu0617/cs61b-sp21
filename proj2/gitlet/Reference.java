@@ -15,17 +15,12 @@ class Reference implements GitObject {
         return blob.getID().equals(map.get(fileName));
     }
 
-    void remove(String fileName) {
-    }
-
-    void add(String fileName, Blob blob) {
-        if (contains(fileName, blob)) {
-            return;
-        }
-        map.put(fileName, blob.createFile());
-    }
-
     String merge(StageReference stageRef) {
-        throw new RuntimeException("Not implemented!");
+        stageRef.merge(map);
+        return createFile();
+    }
+
+    boolean contains(String fileName) {
+        return map.containsKey(fileName);
     }
 }
