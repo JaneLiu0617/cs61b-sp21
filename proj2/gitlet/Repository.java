@@ -42,7 +42,7 @@ class Repository {
     }
 
     static void commit(String message) {
-        GitMap index = readIndex();
+        GitMap index = readObject(INDEX_FILE, GitMap.class);
         Commit headCommit = getHeadCommit();
         if (headCommit.getMap().equals(index)) {
             throw error("No changes added to the commit.");
@@ -130,10 +130,6 @@ class Repository {
         Commit headCommit = getHeadCommit();
         GitMap map = new GitMap(headCommit.getMap());
         writeObject(INDEX_FILE, map);
-    }
-
-    static GitMap readIndex() {
-        return readObject(INDEX_FILE, GitMap.class);
     }
 
     private static Commit getHeadCommit() {
