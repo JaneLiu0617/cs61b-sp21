@@ -2,8 +2,9 @@ package gitlet;
 
 import java.io.File;
 import java.time.Instant;
+import java.util.Map;
 
-import static gitlet.Utils.*;
+import static gitlet.Utils.writeContents;
 
 /**
  * Represents a gitlet commit object.
@@ -14,77 +15,40 @@ import static gitlet.Utils.*;
  */
 class Commit implements GitObject {
 
+    static final Commit INIT = new Commit();
     private final String message;
     private final Instant timestamp;
-    private final String referenceID;
     private final String parentID;
     private final String secondParentID;
-
+    private final Map<String, String> map;
 
     Commit() {
         this.message = "initial commit";
         this.timestamp = Instant.EPOCH;
-        this.referenceID = new Reference().createFile();
         this.parentID = null;
         this.secondParentID = null;
+        this.map = Map.of();
     }
 
-    Commit(String message, String referenceID, String parentID) {
-        this(message, referenceID, parentID, null);
+    Commit(String message) {
+        this(message, null);
     }
 
-    Commit(String message, String referenceID,
-           String parentID, String secondParentID) {
+    Commit(String message, String branch) {
         this.message = message;
         this.timestamp = Instant.now();
-        this.referenceID = referenceID;
-        this.parentID = parentID;
-        this.secondParentID = secondParentID;
+        this.parentID = Repository.getHeadID();
+        this.secondParentID = branch == null ? null : Repository.getBranchID(branch);
+        this.map = Map.copyOf(Repository.readIndex());
     }
 
-    static void createInitCommit() {
-        writeContents(Repository.HEAD_FILE, "refs/heads/master");
-        writeContents(Repository.MASTER_FILE, new Commit().createFile());
+    void writeAsHead() {
+        String id = write();
+        File file = Repository.getHeadCommitFile();
+        writeContents(file, id);
     }
 
-    static void commit(String message) {
-        Commit head = getHead();
-        String id = head.merge(message, StageReference.read());
-        writeToHead(id);
-        StageReference.clearIndexFile();
-    }
-
-    static String getHeadID() {
-        String pathToHead = readContentsAsString(Repository.HEAD_FILE);
-        File headFile = join(Repository.GITLET_DIR, pathToHead);
-        return readContentsAsString(headFile);
-    }
-
-    static Commit getHead() {
-        String headCommitID = getHeadID();
-        return (Commit) GitObject.read(headCommitID);
-    }
-
-    private static void writeToHead(String id) {
-        String pathToHead = readContentsAsString(Repository.HEAD_FILE);
-        File headFile = join(Repository.GITLET_DIR, pathToHead);
-        writeContents(headFile, id);
-    }
-
-    boolean contains(String fileName, Blob blob) {
-        return getReference().contains(fileName, blob);
-    }
-
-    boolean contains(String fileName) {
-        return getReference().contains(fileName);
-    }
-
-    Reference getReference() {
-        return (Reference) GitObject.read(referenceID);
-    }
-
-    String merge(String message, StageReference stageRef) {
-        String id = getReference().merge(stageRef);
-        return new Commit(message, id, getID()).createFile();
+    Map<String, String> getMap() {
+        return map;
     }
 }

@@ -42,7 +42,7 @@ class Gitlet {
         validateNumArgs(2);
         validateRepoInitialized();
         String fileName = args[1];
-        Repository.addFile(fileName);
+        Repository.stage(fileName);
     }
 
     private void commit() {
@@ -56,7 +56,7 @@ class Gitlet {
         validateNumArgs(2);
         validateRepoInitialized();
         String fileName = args[1];
-        Repository.removeFile(fileName);
+        Repository.unstage(fileName);
     }
 
     private void log() {
@@ -75,7 +75,7 @@ class Gitlet {
         validateNumArgs(2);
         validateRepoInitialized();
         String message = args[1];
-        String[] ids = Repository.getCommitIDByMsg(message);
+        String[] ids = Repository.getCommitIDs(message);
         for (String id : ids) {
             System.out.println(id);
         }
