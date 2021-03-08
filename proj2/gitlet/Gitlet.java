@@ -1,6 +1,9 @@
 package gitlet;
 
+import java.io.File;
+
 import static gitlet.Utils.error;
+import static gitlet.Utils.join;
 
 class Gitlet {
 
@@ -42,7 +45,8 @@ class Gitlet {
         validateNumArgs(2);
         validateRepoInitialized();
         String fileName = args[1];
-        Repository.stage(fileName);
+        File file = join(Repository.CWD, fileName);
+        Repository.stage(file);
     }
 
     private void commit() {
@@ -56,7 +60,8 @@ class Gitlet {
         validateNumArgs(2);
         validateRepoInitialized();
         String fileName = args[1];
-        Repository.unstage(fileName);
+        File file = join(Repository.CWD, fileName);
+        Repository.unstage(file);
     }
 
     private void log() {
@@ -99,7 +104,8 @@ class Gitlet {
                     throw error("Incorrect operands.");
                 }
                 String fileName = args[2];
-                Repository.checkoutFile(fileName);
+                File file = join(Repository.CWD, fileName);
+                Repository.checkoutFile(file);
             }
             case 4 -> {
                 if (!args[2].equals("--")) {
@@ -107,7 +113,8 @@ class Gitlet {
                 }
                 String commitID = args[1];
                 String fileName = args[3];
-                Repository.checkoutFileToCommit(fileName, commitID);
+                File file = join(Repository.CWD, fileName);
+                Repository.checkoutFileToCommit(file, commitID);
             }
             default -> throw error("Incorrect operands.");
         }

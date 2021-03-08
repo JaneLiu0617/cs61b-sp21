@@ -35,16 +35,26 @@ class Repository {
         String content = getRelativePath(GITLET_DIR, MASTER_FILE);
         writeContents(HEAD_FILE, content);
         Commit.INIT.writeAsHead();
-        clearIndex();
+        Index.clear();
     }
 
-    static void stage(String fileName) {
+    static void stage(File file) {
+        if (!file.isFile()) {
+            throw error("File does not exist.");
+        }
+        Commit headCommit = Commit.getHead();
+        Index index = Index.read();
+        if (headCommit.contains(file)) {
+            index.remove(file);
+        } else {
+            index.stage(file);
+        }
+        index.write();
     }
 
     static void commit(String message) {
-        GitMap index = readObject(INDEX_FILE, GitMap.class);
-        Commit headCommit = getHeadCommit();
-        if (headCommit.getMap().equals(index)) {
+        Index index = Index.read();
+        if (index.isEmpty()) {
             throw error("No changes added to the commit.");
         }
         if (message.isBlank()) {
@@ -52,11 +62,17 @@ class Repository {
         }
         Commit commit = new Commit(message);
         commit.writeAsHead();
-        clearIndex();
+        Index.clear();
     }
 
-    static void unstage(String fileName) {
-
+    static void unstage(File file) {
+        Commit headCommit = Commit.getHead();
+        Index index = Index.read();
+        if (!index.isTracking(file) && !headCommit.istracking(file)) {
+            throw error("No reason to remove the file.");
+        }
+        index.unstage(file);
+        index.write();
     }
 
     static String getLog() {
@@ -79,11 +95,11 @@ class Repository {
         throw new RuntimeException("Not implemented!");
     }
 
-    static void createBranch(String name) {
+    static void createBranch(String branch) {
 
     }
 
-    static void removeBranch(String name) {
+    static void removeBranch(String branch) {
 
     }
 
@@ -91,19 +107,19 @@ class Repository {
 
     }
 
-    static void mergeBranch(String name) {
+    static void mergeBranch(String branch) {
 
     }
 
-    static void checkoutToBranch(String name) {
+    static void checkoutToBranch(String branch) {
 
     }
 
-    static void checkoutFile(String fileName) {
+    static void checkoutFile(File file) {
 
     }
 
-    static void checkoutFileToCommit(String fileName, String id) {
+    static void checkoutFileToCommit(File file, String id) {
 
     }
 
@@ -111,12 +127,12 @@ class Repository {
         return GITLET_DIR.isDirectory();
     }
 
-    static File getHeadCommitFile() {
+    static File getHeadFile() {
         String path = readContentsAsString(HEAD_FILE);
         return join(GITLET_DIR, path);
     }
 
-    static File getBranchCommitFile(String branch) {
+    static File getBranchFile(String branch) {
         File file = join(HEADS_DIR, branch);
         String path = readContentsAsString(file);
         return join(GITLET_DIR, path);
@@ -124,31 +140,5 @@ class Repository {
 
     private static String getRelativePath(File dir, File file) {
         return dir.toPath().relativize(file.toPath()).toString();
-    }
-
-    private static void clearIndex() {
-        Commit headCommit = getHeadCommit();
-        GitMap map = new GitMap(headCommit.getMap());
-        writeObject(INDEX_FILE, map);
-    }
-
-    private static Commit getHeadCommit() {
-        String id = getHeadID();
-        return (Commit) GitObject.read(id);
-    }
-
-    private static Commit getBranchCommit(String branch) {
-        String id = getBranchID(branch);
-        return (Commit) GitObject.read(id);
-    }
-
-    static String getHeadID() {
-        File file = getHeadCommitFile();
-        return readContentsAsString(file);
-    }
-
-    static String getBranchID(String branch) {
-        File file = getBranchCommitFile(branch);
-        return readContentsAsString(file);
     }
 }
